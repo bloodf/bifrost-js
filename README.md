@@ -6,19 +6,19 @@ Uma forma mais fácil de implementar o websocket da Auttar em seu sistema.
 
 Com NPM
 ```bash
-$ npm install bifrost-js
+$ npm install pagarme-bifrost-js
 ```
 
 Como CDN
 ```html
-<script src="https://raw.githubusercontent.com/bloodf/bifrost-js/master/dist/index.js"></script>
+<script src="https://raw.githubusercontent.com/bloodf/pagarme-bifrost-js/master/dist/index.js"></script>
 ```
 
 ### API
 #### Classe
 Iniciando a classe
 ```JS
-import PagarMeBifrost from 'bifrost-js';
+import PagarMeBifrost from 'pagarme-bifrost-js';
 
 const Bifrost = new PagarMeBifrost({
   contextId: 'ABC123',
@@ -103,7 +103,7 @@ Finaliza o processo de pagamento no WebSocket, após o pagamento iniciado e o ba
 
 ### Exemplo
 ```JS
-import PagarMeBifrost from 'bifrost-js';
+import PagarMeBifrost from 'pagarme-bifrost-js';
 
 const Bifrost = new PagarMeBifrost({
   contextId: 'ABC123',

@@ -1,0 +1,25 @@
+{
+  "name": "bifrost-js",
+  "version": "0.1.1",
+  "description": "PagarMe Bifrost WebSocket JS Class. An easy implementation of PagarMe Bifrost WebSocket Service.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bloodf/bifrost-js.git"
+  },
+  "keywords": [
+    "pagarme",
+    "websocket",
+    "tef"
+  ],
+  "author": {
+    "name": "Heitor Ramon Ribeiro",
+    "email": "heitor.ramon@gmail.com"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "jsnext:main": "index.es.js",
+  "dependencies": {
+    "@babel/runtime": "^7.0.0",
+    "websocket-as-promised": "^0.9.0"
+  }
+}

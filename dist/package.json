@@ -1,6 +1,6 @@
 {
   "name": "pagarme-bifrost-js",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "PagarMe Bifrost WebSocket JS Class. An easy implementation of PagarMe Bifrost WebSocket Service.",
   "repository": {
     "type": "git",

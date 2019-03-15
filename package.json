@@ -1,0 +1,70 @@
+{
+  "name": "bifrost-js",
+  "version": "0.1.1",
+  "description": "PagarMe Bifrost WebSocket JS Class. An easy implementation of PagarMe Bifrost WebSocket Service.",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bloodf/bifrost-js.git"
+  },
+  "keywords": [
+    "pagarme",
+    "websocket",
+    "tef"
+  ],
+  "author": {
+    "name": "Heitor Ramon Ribeiro",
+    "email": "heitor.ramon@gmail.com"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "jsnext:main": "index.es.js",
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ],
+    "plugins": [
+      "@babel/plugin-transform-runtime"
+    ]
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "extends": "airbnb-base"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.0.0",
+    "websocket-as-promised": "^0.9.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/node": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/register": "^7.0.0",
+    "babel-eslint": "^10.0.1",
+    "del": "^2.2.2",
+    "eslint": "^5.9.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-react": "^7.12.4",
+    "eslint-plugin-vue": "^5.0.0",
+    "istanbul": "^1.1.0-alpha.1",
+    "jscs": "^3.0.7",
+    "lint-staged": "^8.1.4",
+    "nyc": "^13.1.0",
+    "rollup": "^0.67.3",
+    "rollup-plugin-babel": "^4.0.3",
+    "rollup-plugin-commonjs": "^9.2.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "sinon": "^7.1.1"
+  },
+  "scripts": {
+    "lint": "eslint src --fix",
+    "build": "node build/buildDist",
+    "prepublish": "npm run build",
+    "dev": "cd ./docs && npm run serve"
+  }
+}

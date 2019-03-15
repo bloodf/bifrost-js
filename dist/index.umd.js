@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('websocket-as-promised')) :
 	typeof define === 'function' && define.amd ? define(['websocket-as-promised'], factory) :
-	(global['bifrost-js'] = factory(global.WebSocketAsPromised));
+	(global['pagarme-bifrost-js'] = factory(global.WebSocketAsPromised));
 }(this, (function (WebSocketAsPromised) { 'use strict';
 
 	WebSocketAsPromised = WebSocketAsPromised && WebSocketAsPromised.hasOwnProperty('default') ? WebSocketAsPromised['default'] : WebSocketAsPromised;

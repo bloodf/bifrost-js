@@ -21,8 +21,8 @@ class PagarMeBifrost {
   /**
    * @typedef {Object} PagarMeConstructor
    * @property {boolean} debug
+   * @property {string} host
    * @property {string} contextId
-   * @property {string} softDescription
    * @property {number} baudRate
    * @property {string} encryptionKey
    * @property {number} pinPadMaxCharLine
@@ -41,6 +41,7 @@ class PagarMeBifrost {
       const constructorOptions = {
         debug: params.debug || false,
         contextId: this.contextId,
+        host: params.host || 'wss://localhost:2000/mpos',
       };
 
       this.__bifrost__ = new BifrostWebSocket(constructorOptions);

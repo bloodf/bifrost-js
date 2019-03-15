@@ -3,13 +3,14 @@ import WebSocketAsPromised from 'websocket-as-promised';
 import { required, logError, logInfo } from './helpers';
 
 class BifrostWebSocket {
-  constructor({ contextId, baudRate, debug }) {
+  constructor({ contextId, baudRate, debug, host }) {
     this.debug = debug || false;
     this.contextId = required('contextId', contextId);
     this.baudRate = baudRate || 115200;
     this._connected = false;
     this.devices = [];
-    this.ws = new WebSocketAsPromised('wss://localhost:2000/mpos', {
+    this._host = host || 'wss://localhost:2000/mpos';
+    this.ws = new WebSocketAsPromised(this._host, {
       packMessage: data => JSON.stringify(data),
       unpackMessage: message => JSON.parse(message),
       attachRequestId: (data, requestId) => Object.assign({ request_type: requestId }, data),

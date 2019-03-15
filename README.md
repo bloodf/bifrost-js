@@ -1,6 +1,6 @@
 
-# Bifrost.JS
-Uma forma mais fácil de implementar o websocket da Auttar em seu sistema.
+# PagarME Bifrost.JS
+Uma forma mais fácil de implementar o websocket da Pagar.me em seu sistema.
 
 ## Como Usar
 

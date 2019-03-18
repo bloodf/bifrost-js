@@ -16,6 +16,9 @@ const configuration: Configuration = {
     asyncToPromises: true,
     babelrc: false,
   },
+  globals: {
+    PagarMeBifrost: 'PagarMeBifrost'
+  },
   output: {
     format: [
       'es',

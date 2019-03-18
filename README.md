@@ -37,7 +37,8 @@ const Bifrost = new PagarMeBifrost({
 });
 ```
 
-##### Construtor
+#### Construtor
+##### Argumentos
 |Propiedade|Tipo|Default|
 |--|--|--|
 | debug | boolean | Ativa o modo de Debug |

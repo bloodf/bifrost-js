@@ -15,10 +15,10 @@ yarn add pagarme-bifrost-js
 
 ```html
 <!-- For UNPKG use the code below. -->
-<script src="https://unpkg.com/pagarme-bifrost-js@0.1.4/dist/index.js"></script>
+<script src="https://unpkg.com/pagarme-bifrost-js@latest/dist/index.js"></script>
 
 <!-- For JSDelivr use the code below. -->
-<script src="https://cdn.jsdelivr.net/npm/pagarme-bifrost-js@0.1.4/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pagarme-bifrost-js@latest/dist/index.js"></script>
 
 <script>
   console.log(PagarMeBifrost);

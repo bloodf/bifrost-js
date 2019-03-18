@@ -3,19 +3,31 @@
 Uma forma mais fácil de implementar o websocket da Pagar.me em seu sistema.
 
 ## Como Usar
+### NPM / Yarn
+```sh
+npm install pagarme-bifrost-js --save
 
-Com NPM
-```bash
-$ npm install pagarme-bifrost-js
+# For Yarn, use the command below.
+yarn add pagarme-bifrost-js
 ```
 
-Como CDN
+### CDN
+
 ```html
-<script src="https://raw.githubusercontent.com/bloodf/pagarme-bifrost-js/master/dist/index.js"></script>
+<!-- For UNPKG use the code below. -->
+<script src="https://unpkg.com/pagarme-bifrost-js@0.1.4/dist/index.js"></script>
+
+<!-- For JSDelivr use the code below. -->
+<script src="https://cdn.jsdelivr.net/npm/pagarme-bifrost-js@0.1.4/dist/index.js"></script>
+
+<script>
+  // UMD module is exposed through the "[cammelCaseName]" global variable.
+  console.log(Auttar);
+</script>
 ```
 
-### API
-#### Classe
+## API
+### Classe
 Iniciando a classe
 ```JS
 import PagarMeBifrost from 'pagarme-bifrost-js';
@@ -38,21 +50,21 @@ const Bifrost = new PagarMeBifrost({
 | pinPadMaxChar | number | Quantidade máxima de caracteres na tela do PinPad |
 | pinPanDisplayLines | number | Número de linhas disponíveis no PinPad |
 
-#### initialize
+### initialize
 Inicializa o WebSocket. Caso esteja tudo Ok, será retornado `true`, senão um `Error`
 
 ```JS
   Bifrost.initialize();
 ```
 
-#### terminate
+### terminate
 Finaliza o WebSocket. Caso esteja tudo Ok, será retornado `true`, senão um `Error`
 
 ```JS
   Bifrost.terminate();
 ```
 
-#### status
+### status
 Retorna o status do WebSocket. Caso esteja tudo Ok, será retornado um objeto de status `BifrostServiceStatus`, senão um `Error`
 
 ```JS
@@ -65,14 +77,14 @@ Retorna o status do WebSocket. Caso esteja tudo Ok, será retornado um objeto de
   Bifrost.status();
 ```
 
-#### showMessage
+### showMessage
 Exibe uma mensagem ou array de mensagens no display do Pinpad.
 
 ```JS
   Bifrost.showMessage('MSG' || ['MSG']);
 ```
 
-#### payment
+### payment
 Inicializa o processo de pagamento no WebSocket, você deve passar dois parâmetros. O primeiro é o valor (float) e o segundo o metodo de pagamento ('credit'|'debit'|1|2). Caso esteja tudo Ok, será retornado `PinPadProcessedCardReturn`, senão um `Error`
 
 ```JS
@@ -90,7 +102,7 @@ Inicializa o processo de pagamento no WebSocket, você deve passar dois parâmet
   Bifrost.payment(amount, method);
 ```
 
-#### finish
+### finish
 Finaliza o processo de pagamento no WebSocket, após o pagamento iniciado e o backEnd processado ele, você deve passar os códigos devolvidos pelo backend para o serviço de WebSocket. Caso esteja tudo Ok, será retornado a resposta do serviço `Object`, senão um `Error`
 
 ```JS
@@ -101,7 +113,7 @@ Finaliza o processo de pagamento no WebSocket, após o pagamento iniciado e o ba
   });
 ```
 
-### Exemplo
+## Exemplo
 ```JS
 import PagarMeBifrost from 'pagarme-bifrost-js';
 

@@ -29,9 +29,9 @@ yarn add pagarme-bifrost-js
 ### Classe
 Iniciando a classe
 ```JS
-import PagarMeBifrost from 'pagarme-bifrost-js';
+import pagarmeBifrostJs from 'pagarme-bifrost-js';
 
-const Bifrost = new PagarMeBifrost({
+const Bifrost = new pagarmeBifrostJs({
   contextId: 'ABC123',
   encryptionKey: 'ENCKEY',
 });

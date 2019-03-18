@@ -21,7 +21,6 @@ yarn add pagarme-bifrost-js
 <script src="https://cdn.jsdelivr.net/npm/pagarme-bifrost-js@0.1.4/dist/index.js"></script>
 
 <script>
-  // UMD module is exposed through the "[cammelCaseName]" global variable.
   console.log(PagarMeBifrost);
 </script>
 ```

@@ -74,9 +74,25 @@ class PagarMeBifrost {
    */
   async terminate() {
     try {
-      if (!this.connected) notConnected();
-      await this.__bifrost__.closePinPadContext();
+      if (this.connected) {
+        await this.__bifrost__.closePinPadContext();
+      } else {
+        notConnected();
+      }
       return Promise.resolve(true);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  /**
+   * Restart the PinPad
+   * @returns {Promise<boolean>}
+   */
+  async restart() {
+    try {
+      await this.terminate();
+      return this.initialize();
     } catch (error) {
       return Promise.reject(error);
     }

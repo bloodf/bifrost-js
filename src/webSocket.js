@@ -42,26 +42,30 @@ const privateVariables = {
 };
 
 function _connect(host, payload) {
+  if (privateVariables.ws === null) {
+    privateVariables.ws = new WebSocket(host);
+  } else if (privateVariables.ws.readyState === 2 || privateVariables.ws.readyState === 3) {
+    _disconnect();
+    privateVariables.ws = new WebSocket(host);
+  }
+
   return new Promise((resolve, reject) => {
     try {
-      if (privateVariables.ws === null) {
-        privateVariables.ws = new WebSocket(host);
-      } else if (privateVariables.ws.readyState === 2 || privateVariables.ws.readyState === 3) {
-        _disconnect();
-        privateVariables.ws = new WebSocket(host);
-      }
-    } catch (e) {
-      reject(e);
-    }
-
-    if (privateVariables.ws) {
       _timeout();
 
-      privateVariables.ws.onopen = () => {
+      const sendRequest = () => {
         _clearTimeout();
         privateVariables.ws.send(JSON.stringify(payload));
         _timeout(60000);
-      };
+      }
+
+      if (privateVariables.ws.readyState === 0) {
+        privateVariables.ws.onopen = () => {
+          sendRequest();
+        };
+      } else if (privateVariables.ws.readyState === 1) {
+        sendRequest();
+      }
 
       privateVariables.ws.onmessage = (evtMsg) => {
         _clearTimeout();
@@ -70,8 +74,10 @@ function _connect(host, payload) {
 
       privateVariables.ws.onerror = (evtError) => {
         _clearTimeout();
-        reject(evtError);
+        if (evtError) reject(evtError);
       };
+    } catch (e) {
+      reject(e);
     }
   });
 }
@@ -106,7 +112,6 @@ class BifrostWebSocket {
     this._host = host || 'wss://localhost:2000/mpos';
     this._amount = 0;
     this._method = '';
-    this._wsConnected = false;
     this.lastRequest = null;
   }
 
@@ -117,7 +122,7 @@ class BifrostWebSocket {
   }
 
   classError(message) {
-    this.debugLog(( typeof message === 'object' ) ? message.text : message);
+    this.debugLog((typeof message === 'object') ? message.text : message);
     throw new Error(message);
   }
 
@@ -126,7 +131,7 @@ class BifrostWebSocket {
   }
 
   get connected() {
-    return ( this._connected );
+    return (this._connected);
   }
 
   set amount(value) {
@@ -144,13 +149,13 @@ class BifrostWebSocket {
   set method(value) {
     if (typeof value === 'string') {
       if (Object.keys(privateVariables.paymentMethods)
-                .includes(value)) {
+        .includes(value)) {
         this._method = value;
       }
     } else if (typeof value === 'number') {
       if (privateVariables.paymentMethods.find(p => p === value)) {
         this._method = Object.keys(privateVariables.paymentMethods)
-                             .find(k => privateVariables.paymentMethods[k] === value);
+          .find(k => privateVariables.paymentMethods[k] === value);
       }
     } else {
       throw new Error('Método de pagamento não permitido.');
@@ -177,7 +182,7 @@ class BifrostWebSocket {
       this.defineRequest(privateVariables.request.closeContext);
       const responseData = _connect(this._host, {
         request_type: privateVariables.request.closeContext,
-        context_id: contextId
+        context_id: contextId,
       });
       this._connected = false;
       this.defineRequest();
@@ -246,6 +251,7 @@ class BifrostWebSocket {
           timeout_milliseconds: params.timeoutMilliseconds,
         },
       });
+      console.log(response);
       if (this.lastRequest === privateVariables.request.initialize) {
         this.defineRequest();
         if (response.response_type === privateVariables.response.initialized) {
@@ -257,16 +263,16 @@ class BifrostWebSocket {
           this.debugLog('Serviço Bifrost já inicializado, reiniciando a conexão.');
           await this.closePinPadContext(response.context_id);
           await this.initialize({
-                                  encryptionKey: params.encryptionKey,
-                                  baud_rate: this.baudRate,
-                                  simpleInitialize: params.simpleInitialize,
-                                  timeoutMilliseconds: params.timeoutMilliseconds,
-                                }, 0);
+            encryptionKey: params.encryptionKey,
+            baud_rate: this.baudRate,
+            simpleInitialize: params.simpleInitialize,
+            timeoutMilliseconds: params.timeoutMilliseconds,
+          }, 0);
           return false;
         }
 
         if (response.response_type === privateVariables.response.error && privateVariables.errorStrings.errorInitialize) {
-          const nextDevice = ( deviceIndex + 1 );
+          const nextDevice = (deviceIndex + 1);
 
           if (nextDevice > this.devices.length) {
             await _disconnect();
@@ -274,11 +280,11 @@ class BifrostWebSocket {
           } else {
             this.debugLog('Dispositivo selecionado não é válido, inicializando novamente com próximo dispositivo da lista.');
             await this.initialize({
-                                    encryptionKey: params.encryptionKey,
-                                    baud_rate: this.baudRate,
-                                    simpleInitialize: params.simpleInitialize,
-                                    timeoutMilliseconds: params.timeoutMilliseconds,
-                                  }, nextDevice);
+              encryptionKey: params.encryptionKey,
+              baud_rate: this.baudRate,
+              simpleInitialize: params.simpleInitialize,
+              timeoutMilliseconds: params.timeoutMilliseconds,
+            }, nextDevice);
             return false;
           }
         }
@@ -294,11 +300,11 @@ class BifrostWebSocket {
           const context = response.error.split(privateVariables.errorStrings.errorContextString)[1];
           if (await this.closePinPadContext(context)) {
             await this.initialize({
-                                    encryptionKey: params.encryptionKey,
-                                    baud_rate: this.baudRate,
-                                    simpleInitialize: params.simpleInitialize,
-                                    timeoutMilliseconds: params.timeoutMilliseconds,
-                                  }, 0);
+              encryptionKey: params.encryptionKey,
+              baud_rate: this.baudRate,
+              simpleInitialize: params.simpleInitialize,
+              timeoutMilliseconds: params.timeoutMilliseconds,
+            }, 0);
           }
 
           return false;
@@ -332,10 +338,10 @@ class BifrostWebSocket {
       });
       logInfo(responseData);
       return Promise.resolve({
-                               connected: !!responseData.status.code,
-                               contextId: responseData.context_id,
-                               connectedDeviceId: responseData.status.connected_device_id,
-                             });
+        connected: !!responseData.status.code,
+        contextId: responseData.context_id,
+        connectedDeviceId: responseData.status.connected_device_id,
+      });
     } catch (error) {
       return Promise.reject(error);
     } finally {
@@ -460,7 +466,7 @@ class BifrostWebSocket {
         request_type: privateVariables.request.finish,
         context_id: this.contextId,
         finish: {
-          success: !!( code && emvData ),
+          success: !!(code && emvData),
           response_code: code || '0000',
           emv_data: emvData || '000000000.0000',
         },

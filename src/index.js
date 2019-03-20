@@ -73,16 +73,19 @@ class PagarMeBifrost {
    * @returns {Promise<Boolean>}
    */
   async terminate() {
-    try {
+    return new Promise((resolve, reject) => {
       if (this.connected) {
-        await this.__bifrost__.closePinPadContext();
+        this.__bifrost__.closePinPadContext()
+          .then(() => {
+            resolve(true);
+          })
+          .catch((e) => {
+            reject(e);
+          });
       } else {
         notConnected();
       }
-      return Promise.resolve(true);
-    } catch (error) {
-      return Promise.reject(error);
-    }
+    });
   }
 
   /**

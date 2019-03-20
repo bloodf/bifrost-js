@@ -60,7 +60,6 @@ class PagarMeBifrost {
    */
   async initialize() {
     try {
-      await this.__bifrost__.startWsConnection();
       await this.__bifrost__.getPinPadDevices();
       await this.__bifrost__.initialize({ encryptionKey: this.encryptionKey });
       return Promise.resolve(true);
@@ -77,7 +76,6 @@ class PagarMeBifrost {
     try {
       if (!this.connected) notConnected();
       await this.__bifrost__.closePinPadContext();
-      await this.__bifrost__.closeWsConnection();
       return Promise.resolve(true);
     } catch (error) {
       return Promise.reject(error);

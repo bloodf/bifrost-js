@@ -84,6 +84,7 @@ function _connect(host, payload) {
 
 function _disconnect() {
   privateVariables.ws.close();
+  privateVariables.ws = null;
 }
 
 function _clearTimeout() {
@@ -180,13 +181,13 @@ class BifrostWebSocket {
     try {
       this.debugLog('Fechando contexto do Serviço Bifrost.');
       this.defineRequest(privateVariables.request.closeContext);
-      const responseData = _connect(this._host, {
+      await _connect(this._host, {
         request_type: privateVariables.request.closeContext,
         context_id: contextId,
       });
       this._connected = false;
       this.defineRequest();
-      return Promise.resolve(responseData);
+      return Promise.resolve(true);
     } catch (error) {
       this.defineRequest();
       return Promise.reject(error);

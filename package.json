@@ -1,6 +1,6 @@
 {
   "name": "pagarme-bifrost-js",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "PagarMe Bifrost WebSocket JS Class. An easy implementation of PagarMe Bifrost WebSocket Service.",
   "private": false,
   "cdn": "dist/index.umd.js",

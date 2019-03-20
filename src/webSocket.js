@@ -177,13 +177,14 @@ class BifrostWebSocket {
    * @param {string} contextId = null - Optional ContextId to be terminated
    * @returns {Promise<*>}
    */
-  async closePinPadContext(contextId = this.contextId) {
+  async closePinPadContext(contextId) {
     try {
+
       this.debugLog('Fechando contexto do Serviço Bifrost.');
       this.defineRequest(privateVariables.request.closeContext);
       await _connect(this._host, {
         request_type: privateVariables.request.closeContext,
-        context_id: contextId,
+        context_id: contextId || this.contextId,
       });
       this._connected = false;
       this.defineRequest();

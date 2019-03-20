@@ -1,6 +1,100 @@
 /* eslint-disable no-underscore-dangle */
-import WebSocketAsPromised from 'websocket-as-promised';
-import { required, logError, logInfo } from './helpers';
+import { logInfo, required } from './helpers';
+
+const privateVariables = {
+  request: {
+    listDevices: 1,
+    initialize: 2,
+    process: 4,
+    finish: 5,
+    displayMessage: 6,
+    status: 7,
+    closeContext: 8,
+  },
+  response: {
+    unknownCommand: 0,
+    devicesListed: 1,
+    initialized: 2,
+    alreadyInitialized: 3,
+    processed: 4,
+    finished: 5,
+    messageDisplayed: 6,
+    status: 7,
+    contextClosed: 8,
+    error: 9,
+  },
+  paymentMethods: {
+    credit: 1,
+    debit: 2,
+  },
+  errorStrings: {
+    errorContextString: 'Device already in use by context ',
+    errorInitialize: 'An error has occured with the [Initialize] request. See the log and contact the support.',
+    errorOperationErrored: 'Transaction Errored',
+    errorOperationFailed: 'Error: 43',
+    errorOperationCanceled: 'Transaction Canceled',
+    catastroficError: 'Error: 14',
+  },
+  ws: null,
+  timeout: null,
+  close: true,
+  timeoutConn: null,
+};
+
+function _connect(host, payload) {
+  return new Promise((resolve, reject) => {
+    try {
+      if (privateVariables.ws === null) {
+        privateVariables.ws = new WebSocket(host);
+      } else if (privateVariables.ws.readyState === 2 || privateVariables.ws.readyState === 3) {
+        _disconnect();
+        privateVariables.ws = new WebSocket(host);
+      }
+    } catch (e) {
+      reject(e);
+    }
+
+    if (privateVariables.ws) {
+      _timeout();
+
+      privateVariables.ws.onopen = () => {
+        _clearTimeout();
+        privateVariables.ws.send(JSON.stringify(payload));
+        _timeout(60000);
+      };
+
+      privateVariables.ws.onmessage = (evtMsg) => {
+        _clearTimeout();
+        resolve(JSON.parse(evtMsg.data));
+      };
+
+      privateVariables.ws.onerror = (evtError) => {
+        _clearTimeout();
+        reject(evtError);
+      };
+    }
+  });
+}
+
+function _disconnect() {
+  privateVariables.ws.close();
+}
+
+function _clearTimeout() {
+  privateVariables.close = false;
+  clearTimeout(privateVariables.timeoutConn);
+}
+
+function _timeout(time = 10000) {
+  privateVariables.close = true;
+  privateVariables.timeoutConn = setTimeout(() => {
+    if (privateVariables.close) {
+      privateVariables.ws.close();
+    } else {
+      _clearTimeout();
+    }
+  }, time);
+}
 
 class BifrostWebSocket {
   constructor({ contextId, baudRate, debug, host }) {
@@ -10,47 +104,10 @@ class BifrostWebSocket {
     this._connected = false;
     this.devices = [];
     this._host = host || 'wss://localhost:2000/mpos';
-    this.ws = new WebSocketAsPromised(this._host, {
-      packMessage: data => JSON.stringify(data),
-      unpackMessage: message => JSON.parse(message),
-      attachRequestId: (data, requestId) => Object.assign({ request_type: requestId }, data),
-      extractRequestId: data => data && data.response_type,
-    });
     this._amount = 0;
     this._method = '';
     this._wsConnected = false;
     this.lastRequest = null;
-    this.__response = {
-      unknownCommand: 0,
-      devicesListed: 1,
-      initialized: 2,
-      alreadyInitialized: 3,
-      processed: 4,
-      finished: 5,
-      messageDisplayed: 6,
-      status: 7,
-      contextClosed: 8,
-      error: 9,
-    };
-    this.__request = {
-      listDevices: 1,
-      initialize: 2,
-      process: 4,
-      finish: 5,
-      displayMessage: 6,
-      status: 7,
-      closeContext: 8,
-    };
-    this.__errorContextString = 'Device already in use by context ';
-    this.__errorInitialize = 'An error has occured with the [Initialize] request. See the log and contact the support.';
-    this.__errorOperationErrored = 'Transaction Errored';
-    this.__errorOperationFailed = 'Error: 43';
-    this.__errorOperationCanceled = 'Transaction Canceled';
-    this.__catastroficError = 'Error: 14';
-    this.__paymentMethods = {
-      credit: 1,
-      debit: 2,
-    };
   }
 
   debugLog(message) {
@@ -60,7 +117,7 @@ class BifrostWebSocket {
   }
 
   classError(message) {
-    this.debugLog((typeof message === 'object') ? message.text : message);
+    this.debugLog(( typeof message === 'object' ) ? message.text : message);
     throw new Error(message);
   }
 
@@ -69,7 +126,7 @@ class BifrostWebSocket {
   }
 
   get connected() {
-    return (this._connected && this._wsConnected);
+    return ( this._connected );
   }
 
   set amount(value) {
@@ -86,14 +143,14 @@ class BifrostWebSocket {
 
   set method(value) {
     if (typeof value === 'string') {
-      if (Object.keys(this.__paymentMethods)
-        .includes(value)) {
+      if (Object.keys(privateVariables.paymentMethods)
+                .includes(value)) {
         this._method = value;
       }
     } else if (typeof value === 'number') {
-      if (this.__paymentMethods.find(p => p === value)) {
-        this._method = Object.keys(this.__paymentMethods)
-          .find(k => this.__paymentMethods[k] === value);
+      if (privateVariables.paymentMethods.find(p => p === value)) {
+        this._method = Object.keys(privateVariables.paymentMethods)
+                             .find(k => privateVariables.paymentMethods[k] === value);
       }
     } else {
       throw new Error('Método de pagamento não permitido.');
@@ -110,36 +167,6 @@ class BifrostWebSocket {
   }
 
   /**
-   * Start the connection to the Bifrost WebSocket
-   * @returns {Promise<boolean>}
-   */
-  async startWsConnection() {
-    try {
-      this.debugLog('Abrindo conexão com o WebSocket.');
-      await this.ws.open();
-      this._wsConnected = true;
-      return true;
-    } catch (error) {
-      logError(error, true);
-      return false;
-    }
-  }
-
-  /**
-   * Terminate the connection to the Bifrost WebSocket
-   * @returns {Promise<void>}
-   */
-  async closeWsConnection() {
-    try {
-      this.debugLog('Fechando conexão com o WebSocket.');
-      await this.ws.close();
-      this._wsConnected = false;
-    } catch (error) {
-      logError(error, true);
-    }
-  }
-
-  /**
    * Terminate the context of the PinPad device
    * @param {string} contextId = null - Optional ContextId to be terminated
    * @returns {Promise<*>}
@@ -147,18 +174,19 @@ class BifrostWebSocket {
   async closePinPadContext(contextId = this.contextId) {
     try {
       this.debugLog('Fechando contexto do Serviço Bifrost.');
-      this.defineRequest(this.__request.closeContext);
-      const responseData = await this.ws.sendRequest({
-        request_type: this.__request.closeContext,
-        context_id: contextId,
-      }, { requestId: this.__request.closeContext });
+      this.defineRequest(privateVariables.request.closeContext);
+      const responseData = _connect(this._host, {
+        request_type: privateVariables.request.closeContext,
+        context_id: contextId
+      });
       this._connected = false;
       this.defineRequest();
       return Promise.resolve(responseData);
     } catch (error) {
       this.defineRequest();
-      await this.closeWsConnection();
       return Promise.reject(error);
+    } finally {
+      await _disconnect();
     }
   }
 
@@ -177,11 +205,11 @@ class BifrostWebSocket {
   async getPinPadDevices() {
     try {
       this.debugLog('Buscando lista de dispositivos do sistema.');
-      this.defineRequest(this.__request.listDevices);
-      const responseData = await this.ws.sendRequest({
-        request_type: this.__request.listDevices,
+      this.defineRequest(privateVariables.request.listDevices);
+      const responseData = await _connect(this._host, {
+        request_type: privateVariables.request.listDevices,
         context_id: this.contextId,
-      }, { requestId: this.__request.listDevices });
+      });
       this.debugLog(responseData);
       this.devices = responseData.device_list;
       this.defineRequest();
@@ -205,11 +233,10 @@ class BifrostWebSocket {
    */
   async initialize(params, deviceIndex = 0) {
     try {
-      if (!this._wsConnected) await this.startWsConnection();
       this.debugLog(`Conectando ao PinPad ${this.devices[deviceIndex].id}.`);
-      this.defineRequest(this.__request.initialize);
-      this.ws.sendPacked({
-        request_type: this.__request.initialize,
+      this.defineRequest(privateVariables.request.initialize);
+      const response = await _connect(this._host, {
+        request_type: privateVariables.request.initialize,
         context_id: this.contextId,
         initialize: {
           device_id: this.devices[deviceIndex].id,
@@ -219,77 +246,69 @@ class BifrostWebSocket {
           timeout_milliseconds: params.timeoutMilliseconds,
         },
       });
-      this.ws.onMessage.addListener(async (message) => {
-        if (this.lastRequest === this.__request.initialize) {
-          this.defineRequest();
-          const response = JSON.parse(message);
-          if (response.response_type === this.__response.initialized) {
-            this._connected = true;
-            this.ws.removeAllListeners();
-            return this.debugLog(`PinPad ${this.devices[deviceIndex].id} inicializado com sucesso.`);
-          }
+      if (this.lastRequest === privateVariables.request.initialize) {
+        this.defineRequest();
+        if (response.response_type === privateVariables.response.initialized) {
+          this._connected = true;
+          return this.debugLog(`PinPad ${this.devices[deviceIndex].id} inicializado com sucesso.`);
+        }
 
-          if (response.response_type === this.__response.alreadyInitialized) {
-            this.debugLog('Serviço Bifrost já inicializado, reiniciando a conexão.');
-            this.ws.removeAllListeners();
-            await this.closePinPadContext(response.context_id);
+        if (response.response_type === privateVariables.response.alreadyInitialized) {
+          this.debugLog('Serviço Bifrost já inicializado, reiniciando a conexão.');
+          await this.closePinPadContext(response.context_id);
+          await this.initialize({
+                                  encryptionKey: params.encryptionKey,
+                                  baud_rate: this.baudRate,
+                                  simpleInitialize: params.simpleInitialize,
+                                  timeoutMilliseconds: params.timeoutMilliseconds,
+                                }, 0);
+          return false;
+        }
+
+        if (response.response_type === privateVariables.response.error && privateVariables.errorStrings.errorInitialize) {
+          const nextDevice = ( deviceIndex + 1 );
+
+          if (nextDevice > this.devices.length) {
+            await _disconnect();
+            this.classError('Não foi possível inicial a conexão com nenhum dispositivo.');
+          } else {
+            this.debugLog('Dispositivo selecionado não é válido, inicializando novamente com próximo dispositivo da lista.');
             await this.initialize({
-              encryptionKey: params.encryptionKey,
-              baud_rate: this.baudRate,
-              simpleInitialize: params.simpleInitialize,
-              timeoutMilliseconds: params.timeoutMilliseconds,
-            }, 0);
-            return false;
-          }
-
-          if (response.response_type === this.__response.error && this.__errorInitialize) {
-            const nextDevice = (deviceIndex + 1);
-
-            if (nextDevice > this.devices.length) {
-              await this.closeWsConnection();
-              this.classError('Não foi possível inicial a conexão com nenhum dispositivo.');
-            } else {
-              this.debugLog('Dispositivo selecionado não é válido, inicializando novamente com próximo dispositivo da lista.');
-              this.ws.removeAllListeners();
-              await this.initialize({
-                encryptionKey: params.encryptionKey,
-                baud_rate: this.baudRate,
-                simpleInitialize: params.simpleInitialize,
-                timeoutMilliseconds: params.timeoutMilliseconds,
-              }, nextDevice);
-              return false;
-            }
-          }
-
-          if (response.error === this.__catastroficError) {
-            this.classError('Erro catastrófico no sistema. Por favor, reinicialize o PinPad e o Serviço do Bifrost');
-            this.ws.removeAllListeners();
-            return false;
-          }
-
-          if (response.error && response.error.includes(this.__errorContextString)) {
-            this.debugLog('Serviço Bifrost com contexto diferente do definido na classe.');
-            this.ws.removeAllListeners();
-            const context = response.error.split(this.__errorContextString)[1];
-            if (await this.closePinPadContext(context)) {
-              await this.initialize({
-                encryptionKey: params.encryptionKey,
-                baud_rate: this.baudRate,
-                simpleInitialize: params.simpleInitialize,
-                timeoutMilliseconds: params.timeoutMilliseconds,
-              }, 0);
-            }
-
+                                    encryptionKey: params.encryptionKey,
+                                    baud_rate: this.baudRate,
+                                    simpleInitialize: params.simpleInitialize,
+                                    timeoutMilliseconds: params.timeoutMilliseconds,
+                                  }, nextDevice);
             return false;
           }
         }
 
-        return message;
-      });
-      return true;
+        if (response.error === privateVariables.errorStrings.catastroficError) {
+          this.classError('Erro catastrófico no sistema. Por favor, reinicialize o PinPad e o Serviço do Bifrost');
+          _disconnect();
+          return false;
+        }
+
+        if (response.error && response.error.includes(privateVariables.errorStrings.errorContextString)) {
+          this.debugLog('Serviço Bifrost com contexto diferente do definido na classe.');
+          const context = response.error.split(privateVariables.errorStrings.errorContextString)[1];
+          if (await this.closePinPadContext(context)) {
+            await this.initialize({
+                                    encryptionKey: params.encryptionKey,
+                                    baud_rate: this.baudRate,
+                                    simpleInitialize: params.simpleInitialize,
+                                    timeoutMilliseconds: params.timeoutMilliseconds,
+                                  }, 0);
+          }
+
+          return false;
+        }
+      }
+      return response;
     } catch (error) {
-      this.defineRequest();
       return Promise.reject(error);
+    } finally {
+      this.defineRequest();
     }
   }
 
@@ -306,20 +325,21 @@ class BifrostWebSocket {
   async getPinPanStatus() {
     try {
       this.debugLog('Buscando status do serviço Bifrost.');
-      this.defineRequest(this.__request.status);
-      const responseData = await this.ws.sendRequest({
-        request_type: this.__request.status,
+      this.defineRequest(privateVariables.request.status);
+      const responseData = await _connect(this._host, {
+        request_type: privateVariables.request.status,
         context_id: this.contextId,
-      }, { requestId: this.__response.status });
+      });
       logInfo(responseData);
       return Promise.resolve({
-        connected: !!responseData.status.code,
-        contextId: responseData.context_id,
-        connectedDeviceId: responseData.status.connected_device_id,
-      });
+                               connected: !!responseData.status.code,
+                               contextId: responseData.context_id,
+                               connectedDeviceId: responseData.status.connected_device_id,
+                             });
     } catch (error) {
-      this.defineRequest();
       return Promise.reject(error);
+    } finally {
+      this.defineRequest();
     }
   }
 
@@ -331,19 +351,19 @@ class BifrostWebSocket {
   async displayMessageOnPinPadScreen(message) {
     try {
       this.debugLog(`Mostrando "${message}" no display do PinPad.`);
-      this.defineRequest(this.__request.displayMessage);
-      const responseData = await this.ws.sendRequest({
-        request_type: this.__request.displayMessage,
+      this.defineRequest(privateVariables.request.displayMessage);
+      const responseData = await _connect(this._host, {
+        request_type: privateVariables.request.displayMessage,
         context_id: this.contextId,
         display_message: {
           message,
         },
-      }, { requestId: this.__response.messageDisplayed });
-      this.defineRequest();
+      });
       return Promise.resolve(responseData);
     } catch (error) {
-      this.defineRequest();
       return Promise.reject(error);
+    } finally {
+      this.defineRequest();
     }
   }
 
@@ -359,7 +379,7 @@ class BifrostWebSocket {
   startPayment(params) {
     try {
       this.amount = params.amount;
-      this.method = params.method || this.__paymentMethods.credit;
+      this.method = params.method || privateVariables.paymentMethods.credit;
     } catch (error) {
       throw new Error(error);
     }
@@ -381,56 +401,48 @@ class BifrostWebSocket {
    */
   async startPaymentProcess() {
     try {
-      return new Promise((resolve, reject) => {
-        this.debugLog(`Iniciando processo de pagamento. Venda via ${this.method}, valor ${this.amount / 100}`);
-        this.defineRequest(this.__request.process);
-        this.ws.sendPacked({
-          request_type: this.__request.process,
-          context_id: this.contextId,
-          process: {
-            amount: this.amount,
-            magstripe_payment_method: this.method,
-          },
-        });
-        this.ws.onMessage.addListener(async (eventResponse) => {
-          if (this.lastRequest === this.__request.process) {
-            const response = JSON.parse(eventResponse);
-            this.defineRequest();
-            if (response.error === this.__errorOperationCanceled) {
-              const error = {
-                text: 'Operação cancelada pelo usuário.',
-                type: 'cardCanceled',
-              };
-              this.debugLog(error.text);
-              this.ws.removeAllListeners();
-              return reject(error);
-            }
+      this.debugLog(`Iniciando processo de pagamento. Venda via ${this.method}, valor ${this.amount / 100}`);
+      this.defineRequest(privateVariables.request.process);
 
-            if (
-              response.error === this.__errorOperationErrored
-              || response.error === this.__errorOperationFailed
-            ) {
-              const error = {
-                text: 'Aconteceu algum erro na operação, tente novamente.',
-                type: 'operationError',
-              };
-              this.debugLog(error.text);
-              this.ws.removeAllListeners();
-              return reject(error);
-            }
-
-            if (response.response_type === this.__response.processed) {
-              this.ws.removeAllListeners();
-              return resolve(response.process);
-            }
-          }
-
-          return eventResponse;
-        });
+      const response = await _connect(this._host, {
+        request_type: privateVariables.request.process,
+        context_id: this.contextId,
+        process: {
+          amount: this.amount,
+          magstripe_payment_method: this.method,
+        },
       });
+
+      if (this.lastRequest === privateVariables.request.process) {
+        if (response.error === privateVariables.errorStrings.errorOperationCanceled) {
+          const error = {
+            text: 'Operação cancelada pelo usuário.',
+            type: 'cardCanceled',
+          };
+          this.debugLog(error.text);
+          return Promise.reject(error);
+        }
+
+        if (
+          response.error === privateVariables.errorStrings.errorOperationErrored
+          || response.error === privateVariables.errorStrings.errorOperationFailed
+        ) {
+          const error = {
+            text: 'Aconteceu algum erro na operação, tente novamente.',
+            type: 'operationError',
+          };
+          this.debugLog(error.text);
+          return Promise.reject(error);
+        }
+
+        if (response.response_type === privateVariables.response.processed) {
+          return Promise.resolve(response.process);
+        }
+      }
     } catch (error) {
-      this.defineRequest();
       return Promise.reject(error);
+    } finally {
+      this.defineRequest();
     }
   }
 
@@ -443,21 +455,20 @@ class BifrostWebSocket {
   async finishPaymentProcess(code, emvData) {
     try {
       this.debugLog(`Finalizando a venda via ${this.method}`);
-      this.defineRequest(this.__request.finish);
-      const process = await this.ws.sendRequest({
-        request_type: this.__request.finish,
+      this.defineRequest(privateVariables.request.finish);
+      return await _connect(this._host, {
+        request_type: privateVariables.request.finish,
         context_id: this.contextId,
         finish: {
-          success: !!(code && emvData),
+          success: !!( code && emvData ),
           response_code: code || '0000',
           emv_data: emvData || '000000000.0000',
         },
-      }, { requestId: this.__response.finished });
-      this.defineRequest();
-      return process;
+      });
     } catch (error) {
-      this.defineRequest();
       return Promise.reject(error);
+    } finally {
+      this.defineRequest();
     }
   }
 }

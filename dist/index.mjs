@@ -1,5 +1,5 @@
 /*!
- * pagarme-bifrost-js v0.2.2
+ * pagarme-bifrost-js v0.2.3
  * (c) Heitor Ramon Ribeiro <heitor.ramon@gmail.com>
  * Released under the MIT License.
  */

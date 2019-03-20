@@ -251,7 +251,6 @@ class BifrostWebSocket {
           timeout_milliseconds: params.timeoutMilliseconds,
         },
       });
-      console.log(response);
       if (this.lastRequest === privateVariables.request.initialize) {
         this.defineRequest();
         if (response.response_type === privateVariables.response.initialized) {
